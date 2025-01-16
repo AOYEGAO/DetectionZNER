@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_curve, auc
 import numpy as np
 import matplotlib.pyplot as plt
+import torch.nn.functional as F
 
 # 生成数据：10000个样本，每个样本8个特征
 random_data = np.random.randn(5000, 8)  # 噪声
@@ -38,7 +39,7 @@ class MLPModel(nn.Module):
     def forward(self, x):
         x = torch.relu(self.fc1(x))  # 第一层激活
         x = torch.relu(self.fc2(x))  # 第二层激活
-        x = self.fc3(x)  # 输出层
+        x = F.softmax(torch.relu(self.fc3(x)))  # 输出层
         return x
 
 # 创建模型
@@ -56,7 +57,7 @@ for epoch in range(num_epochs):
     
     # 计算损失
     loss = criterion(y_pred, torch.max(y_train_tensor, 1)[1])  # CrossEntropyLoss需要标签为索引形式
-    
+    x = torch.max(y_train_tensor, 1)[1]
     # 反向传播和优化
     optimizer.zero_grad()
     loss.backward()
@@ -69,7 +70,7 @@ for epoch in range(num_epochs):
 # 测试模型
 with torch.no_grad():
     y_test_pred = model(X_test_tensor)
-    y_test_pred_class = torch.max(y_test_pred, 1)  # 获取预测类别索引
+    y_test_pred_class = torch.max(y_test_pred, 1)[1]  # 获取预测类别索引
     
     # 计算准确率
     accuracy = accuracy_score(torch.max(y_test_tensor, 1)[1].numpy(), y_test_pred_class.numpy())
